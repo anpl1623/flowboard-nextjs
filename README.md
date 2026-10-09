@@ -4,6 +4,10 @@ A small dashboard for business automation workflows, e.g. "Sync Shopify orders t
 
 Built with Next.js 15 (App Router), React 19, TypeScript and Tailwind CSS v4.
 
+![Workflow list](docs/list.png)
+
+![Workflow detail page](docs/detail.png)
+
 ## Running it
 
 Requires Node.js 18.18 or newer.
@@ -61,6 +65,18 @@ Checks: `npm run lint` and `npx tsc --noEmit`.
 - **Pages render per request** (`dynamic = "force-dynamic"`) because the data can change at any time.
 - **"Failed runs (24h)"** counts runs across all workflows whose start time is within the last 24 hours.
 
+## What I'd do next
+
+- Move the data into Postgres with Prisma. Pages and the action only call functions in `src/lib/data.ts`, so that file is the only one that would change.
+- Add a scheduler or job queue that checks a workflow's status before each run, so pausing actually stops work.
+- Require sign-in before the action runs, and record who paused or resumed each workflow.
+- Write unit tests for the action's input validation.
+- Add a status filter on the list page using `searchParams`, so a filtered view has its own URL.
+
 ## AI usage
 
 I used Claude Code. Its instruction file is [`AGENTS.md`](./AGENTS.md), committed as-is. It sets the stack constraints (Next 15, Tailwind v4, no new dependencies), the folder layout, the rules for server actions, and the checks to run before a task is done. For the visual design (palette, type, spacing, accessibility checks) I directed it to use a UI/UX design skill.
+
+## Time spent
+
+About 2 hours.
