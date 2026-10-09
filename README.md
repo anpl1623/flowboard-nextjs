@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Flowboard
 
-## Getting Started
+A small dashboard for business automation workflows, e.g. "Sync Shopify orders to NetSuite" or "Slack alert on failed payment". You can see each workflow's trigger, recent runs and success rate, and pause or resume it.
 
-First, run the development server:
+Built with Next.js 15 (App Router), React 19, TypeScript and Tailwind CSS v4.
+
+## Running it
+
+Requires Node.js 18.18 or newer.
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Production build:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+Checks: `npm run lint` and `npx tsc --noEmit`.
 
-To learn more about Next.js, take a look at the following resources:
+## What's where
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Path                                    | Purpose                                            |
+| --------------------------------------- | -------------------------------------------------- |
+| `src/app/page.tsx`                      | Workflow list, rendered on the server              |
+| `src/app/workflows/[id]/page.tsx`       | Dynamic detail route                               |
+| `src/app/actions.ts`                    | Server action                                      |
+| `src/components/StatusToggle.tsx`       | The only client component: the pause/resume switch |
+| `src/lib/data.ts`                       | Seed data and the in-memory store                  |
+| `src/lib/types.ts`, `src/lib/format.ts` | Domain types and formatting helpers                |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Server action
 
-## Deploy on Vercel
+`updateWorkflowStatus(id, status)` in `src/app/actions.ts` pauses or resumes a workflow.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- The switch is a plain `<form action={...}>`, so it works before JavaScript loads.
+- While the request is pending, the switch shows the target state and is disabled, so the click feels instant and can't be double-submitted.
+- The action takes the _desired_ status, not "toggle". A repeated submit, or a second tab with stale state, can't flip the workflow back by accident.
+- Server actions are public POST endpoints, so the action validates the id against the store and the status against the allowed values before changing anything.
+- It then calls `revalidatePath` for the list and the detail page so both show the new state.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Dynamic route
+
+`/workflows/[id]` shows one workflow: trigger, owner, success rate, average duration, its steps as a pipeline, and a table of recent runs with error messages.
+
+- `params` is awaited (it's a Promise in Next.js 15).
+- Unknown ids call `notFound()` and render `not-found.tsx`.
+- `generateMetadata` sets the page title to the workflow name.
+
+## Assumptions and tradeoffs
+
+- **Data is mock and in memory.** Workflows are seeded in `src/lib/data.ts`; run timestamps are relative to server start so the demo never looks stale. Pause/resume state lasts until the server restarts. A real version would put the store behind a database, and only `src/lib/data.ts` would need to change.
+- **Single server process.** The store lives on `globalThis`, so it's shared across routes and survives dev hot reloads. On serverless hosting (e.g. Vercel), each instance has its own memory, so state would be inconsistent there. That's why this is meant to run locally.
+- **Pausing doesn't stop real jobs.** There is no scheduler; "paused" is the state a scheduler would check before running.
+- **Pages render per request** (`dynamic = "force-dynamic"`) because the data can change at any time.
+- **"Failed runs (24h)"** counts runs across all workflows whose start time is within the last 24 hours.
+
+## AI usage
+
+I used Claude Code. Its instruction file is [`AGENTS.md`](./AGENTS.md), committed as-is. It sets the stack constraints (Next 15, Tailwind v4, no new dependencies), the folder layout, the rules for server actions, and the checks to run before a task is done. For the visual design (palette, type, spacing, accessibility checks) I directed it to use a UI/UX design skill.

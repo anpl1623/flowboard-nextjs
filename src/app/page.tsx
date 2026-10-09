@@ -1,103 +1,124 @@
-import Image from "next/image";
+import Link from "next/link";
+import { RunStatusBadge } from "@/components/RunStatusBadge";
+import { StatusToggle } from "@/components/StatusToggle";
+import { TriggerIcon } from "@/components/TriggerIcon";
+import { getWorkflows } from "@/lib/data";
+import { successRate, timeAgo } from "@/lib/format";
 
-export default function Home() {
+// Data lives in a mutable in-memory store, so render per request instead of at build time.
+export const dynamic = "force-dynamic";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export default function HomePage() {
+  const workflows = getWorkflows();
+  const active = workflows.filter((workflow) => workflow.status === "active").length;
+  const since = Date.now() - DAY_MS;
+  const recentRuns = workflows.flatMap((workflow) =>
+    workflow.runs.filter((run) => new Date(run.startedAt).getTime() >= since),
+  );
+  const failedRecent = recentRuns.filter((run) => run.status === "failed").length;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Automations running across your business systems. Pause one to stop it from triggering.
+        </p>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Workflows" value={workflows.length} />
+        <Stat label="Active" value={active} />
+        <Stat label="Paused" value={workflows.length - active} />
+        <Stat
+          label="Failed runs (24h)"
+          value={failedRecent}
+          tone={failedRecent > 0 ? "danger" : undefined}
+          hint={`of ${recentRuns.length}`}
+        />
+      </dl>
+
+      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
+        {workflows.map((workflow) => {
+          const lastRun = workflow.runs[0];
+          const rate = successRate(workflow.runs);
+          return (
+            <li
+              key={workflow.id}
+              className="relative flex flex-col gap-3 p-4 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:gap-6"
+            >
+              <div className="min-w-0 flex-1">
+                {/* The ::after overlay makes the whole row clickable; the toggle sits above it. */}
+                <Link
+                  href={`/workflows/${workflow.id}`}
+                  className="font-medium after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring"
+                >
+                  {workflow.name}
+                </Link>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{workflow.description}</p>
+                <p className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
+                  <TriggerIcon type={workflow.trigger.type} className="size-3.5" />
+                  {workflow.trigger.detail}
+                  <span aria-hidden="true">·</span>
+                  {workflow.owner}
+                </p>
+              </div>
+
+              <dl className="flex gap-6 text-sm sm:w-72 sm:shrink-0">
+                <div className="w-40">
+                  <dt className="text-xs text-muted-foreground">Last run</dt>
+                  <dd className="mt-1 flex items-center gap-2">
+                    {lastRun ? (
+                      <>
+                        <RunStatusBadge status={lastRun.status} />
+                        <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
+                          {timeAgo(lastRun.startedAt)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">Never</span>
+                    )}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Success</dt>
+                  <dd className="mt-1 font-mono tabular-nums">{rate === null ? "—" : `${rate}%`}</dd>
+                </div>
+              </dl>
+
+              <div className="shrink-0">
+                <StatusToggle id={workflow.id} name={workflow.name} status={workflow.status} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  label: string;
+  value: number;
+  hint?: string;
+  tone?: "danger";
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="mt-1 flex items-baseline gap-1.5">
+        <span className={`font-mono text-2xl font-semibold tabular-nums ${tone === "danger" ? "text-danger" : ""}`}>
+          {value}
+        </span>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      </dd>
     </div>
   );
 }
