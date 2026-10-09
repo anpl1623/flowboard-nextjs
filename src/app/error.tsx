@@ -2,13 +2,13 @@
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <div role="alert" className="rounded-lg border border-danger/40 bg-danger-soft p-6 text-sm text-danger">
+    <div role="alert" className="motion-rise rounded-xl border border-danger/40 bg-danger-soft p-6 text-sm text-danger">
       <p className="font-semibold">Something went wrong.</p>
       <p className="mt-1">{error.message}</p>
       <button
         type="button"
         onClick={reset}
-        className="mt-4 min-h-11 cursor-pointer rounded-md border border-danger/40 px-3 font-medium hover:bg-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className="mt-4 min-h-11 cursor-pointer rounded-lg border border-danger/40 px-4 font-medium transition-[background-color,transform] duration-(--dur-fast) hover:bg-card active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         Try again
       </button>

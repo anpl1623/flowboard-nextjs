@@ -40,6 +40,7 @@ src/
     types.ts                  domain types
     data.ts                   seed data + in-memory store; the only module that touches the store
     format.ts                 date / duration / percentage formatting
+    motion.ts                 stagger(i): sets the --i custom property used for entrance delays
 ```
 
 ## Conventions
@@ -50,6 +51,17 @@ src/
 - Keep components small and typed. No `any`.
 - Comments explain *why*, not *what*. Keep them rare.
 - Use Tailwind utility classes. Support dark mode with `dark:` variants.
+
+## Motion
+
+All motion tokens and keyframes live in `src/app/globals.css`. Use them; do not hardcode durations or easings.
+
+- Durations: `--dur-fast` 150ms (hover, press), `--dur-base` 220ms (state changes), `--dur-enter` 480ms (entrances), `--dur-exit` 150ms. Easings: `--ease-out` (enter), `--ease-in` (exit), `--ease-spring` (switch thumb).
+- Staggered entrances: add `motion-rise` (or `motion-fade` for table rows) and `style={stagger(i)}`. The delay is `i * --stagger`, capped at `--stagger-max` items.
+- Animate only `transform` and `opacity` (plus color and shadow on hover). Never width or height.
+- Entrance animations use `fill-mode: backwards` so hover transforms on the same element still work afterwards.
+- Reduced motion is handled once, globally, at the bottom of `globals.css`. Infinite animations (pulse, shimmer) also get `motion-reduce:hidden`.
+- Client components exist only where motion needs state: `StatusToggle`, `AnimatedNumber`, `PausedBanner`.
 
 ## Before calling a task done
 

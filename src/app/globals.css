@@ -15,6 +15,23 @@
   --danger-soft: #fee2e2;
   --warning: #a16207;
   --warning-soft: #fef3c7;
+
+  /* Elevation: one resting shadow and one "lifted" shadow used on hover. */
+  --elev-card: 0 1px 2px rgb(15 23 42 / 0.05);
+  --elev-lift: 0 10px 24px -10px rgb(15 23 42 / 0.18), 0 2px 4px rgb(15 23 42 / 0.05);
+
+  /* Motion tokens. Durations: fast = hover/press, base = state changes, enter = page entrances. */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-enter: 480ms;
+  --dur-exit: 150ms;
+  /* Ease-out for things entering, ease-in for things leaving, spring for the switch thumb overshoot. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Per-item delay for staggered entrances. Items set --i; the delay stops growing after item 14. */
+  --stagger: 40ms;
+  --stagger-max: 14;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +49,8 @@
     --danger-soft: #450a0a;
     --warning: #fbbf24;
     --warning-soft: #422006;
+    --elev-card: 0 1px 2px rgb(0 0 0 / 0.4);
+    --elev-lift: 0 10px 24px -10px rgb(0 0 0 / 0.7), 0 2px 4px rgb(0 0 0 / 0.4);
   }
 }
 
@@ -49,6 +68,8 @@
   --color-danger-soft: var(--danger-soft);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
+  --shadow-card: var(--elev-card);
+  --shadow-lift: var(--elev-lift);
   --font-sans: var(--font-fira-sans);
   --font-mono: var(--font-fira-code);
 }
@@ -58,11 +79,148 @@ body {
   color: var(--foreground);
 }
 
+/*
+ * Keyframes. Every one only touches transform and opacity, so the browser can run them on
+ * the compositor and nothing around them reflows.
+ */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes draw-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes draw-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes roll-in {
+  from {
+    opacity: 0;
+    transform: translateY(60%);
+  }
+}
+
+@keyframes roll-out {
+  to {
+    opacity: 0;
+    transform: translateY(-60%);
+  }
+}
+
+@keyframes banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes banner-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/*
+ * Entrance utilities. fill-mode "backwards" (not "both") only applies the from-state during the
+ * delay. After the animation ends the element returns to its normal styles, so hover transforms
+ * on the same element still work.
+ */
+@utility motion-rise {
+  animation: rise var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), var(--stagger-max)) * var(--stagger));
+}
+
+/* Opacity only: used on table rows, where transforms are less reliable across browsers. */
+@utility motion-fade {
+  animation: fade-in var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), var(--stagger-max)) * var(--stagger));
+}
+
+/* Connector lines grow from where the previous step ends: left to right on desktop, top down on mobile. */
+@utility motion-draw {
+  transform-origin: top;
+  animation: draw-y var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(min(var(--i, 0), var(--stagger-max)) * var(--stagger));
+  @media (min-width: 48rem) {
+    transform-origin: left;
+    animation-name: draw-x;
+  }
+}
+
+@utility motion-roll-in {
+  animation: roll-in var(--dur-base) var(--ease-out) backwards;
+}
+
+@utility motion-roll-out {
+  animation: roll-out var(--dur-base) var(--ease-in) forwards;
+}
+
+@utility motion-banner-in {
+  animation: banner-in var(--dur-base) var(--ease-out) backwards;
+}
+
+@utility motion-banner-out {
+  animation: banner-out var(--dur-exit) var(--ease-in) forwards;
+}
+
+/* A very quiet grid that fades out toward the edges; sits behind the page heading. */
+@utility bg-grid {
+  background-image:
+    radial-gradient(60% 90% at 50% 0%, color-mix(in srgb, var(--success) 9%, transparent), transparent),
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    40px 40px,
+    40px 40px;
+  mask-image: radial-gradient(ellipse 70% 100% at 50% 0%, black 25%, transparent 75%);
+}
+
+/* Reduced motion: transitions and animations finish instantly, so everything shows its final state. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
   }
 }

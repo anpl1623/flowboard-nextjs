@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { RunStatusBadge } from "@/components/RunStatusBadge";
 import { StatusToggle } from "@/components/StatusToggle";
 import { TriggerIcon } from "@/components/TriggerIcon";
 import { getWorkflows } from "@/lib/data";
 import { successRate, timeAgo } from "@/lib/format";
+import { stagger } from "@/lib/motion";
 
 // Data lives in a mutable in-memory store, so render per request instead of at build time.
 export const dynamic = "force-dynamic";
@@ -21,18 +23,19 @@ export default function HomePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Workflows</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+      <div className="motion-rise" style={stagger(0)}>
+        <h1 className="text-3xl font-semibold tracking-tight">Workflows</h1>
+        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
           Automations running across your business systems. Pause one to stop it from triggering.
         </p>
       </div>
 
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Workflows" value={workflows.length} />
-        <Stat label="Active" value={active} />
-        <Stat label="Paused" value={workflows.length - active} />
+        <Stat index={1} label="Workflows" value={workflows.length} />
+        <Stat index={2} label="Active" value={active} />
+        <Stat index={3} label="Paused" value={workflows.length - active} />
         <Stat
+          index={4}
           label="Failed runs (24h)"
           value={failedRecent}
           tone={failedRecent > 0 ? "danger" : undefined}
@@ -40,20 +43,21 @@ export default function HomePage() {
         />
       </dl>
 
-      <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
-        {workflows.map((workflow) => {
+      <ul className="space-y-2.5">
+        {workflows.map((workflow, index) => {
           const lastRun = workflow.runs[0];
           const rate = successRate(workflow.runs);
           return (
             <li
               key={workflow.id}
-              className="relative flex flex-col gap-3 p-4 transition-colors hover:bg-muted/60 sm:flex-row sm:items-center sm:gap-6"
+              style={stagger(index + 5)}
+              className="motion-rise group relative flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-card transition-[transform,box-shadow,border-color,background-color] duration-(--dur-fast) ease-(--ease-out) hover:-translate-y-px hover:border-muted-foreground/40 hover:shadow-lift has-[a:active]:translate-y-0 has-[a:active]:scale-[0.995] has-[a:active]:shadow-card sm:flex-row sm:items-center sm:gap-6"
             >
               <div className="min-w-0 flex-1">
                 {/* The ::after overlay makes the whole row clickable; the toggle sits above it. */}
                 <Link
                   href={`/workflows/${workflow.id}`}
-                  className="font-medium after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring"
+                  className="font-medium after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-ring"
                 >
                   {workflow.name}
                 </Link>
@@ -91,6 +95,20 @@ export default function HomePage() {
               <div className="shrink-0">
                 <StatusToggle id={workflow.id} name={workflow.name} status={workflow.status} />
               </div>
+
+              {/* Reserves its width even when hidden so the row doesn't shift on hover. */}
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="hidden size-4 shrink-0 -translate-x-1 text-muted-foreground opacity-0 transition-[transform,opacity] duration-(--dur-base) ease-(--ease-out) group-hover:translate-x-0 group-hover:opacity-100 group-has-[a:focus-visible]:translate-x-0 group-has-[a:focus-visible]:opacity-100 sm:block"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M9 6l6 6-6 6" />
+              </svg>
             </li>
           );
         })}
@@ -100,22 +118,29 @@ export default function HomePage() {
 }
 
 function Stat({
+  index,
   label,
   value,
   hint,
   tone,
 }: {
+  index: number;
   label: string;
   value: number;
   hint?: string;
   tone?: "danger";
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className="mt-1 flex items-baseline gap-1.5">
-        <span className={`font-mono text-2xl font-semibold tabular-nums ${tone === "danger" ? "text-danger" : ""}`}>
-          {value}
+    <div
+      style={stagger(index)}
+      className="motion-rise rounded-xl border border-border bg-card p-4 shadow-card"
+    >
+      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</dt>
+      <dd className="mt-2 flex items-baseline gap-1.5">
+        <span
+          className={`font-mono text-3xl font-semibold leading-none tabular-nums ${tone === "danger" ? "text-danger" : ""}`}
+        >
+          <AnimatedNumber value={value} />
         </span>
         {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
       </dd>

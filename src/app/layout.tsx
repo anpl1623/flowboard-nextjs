@@ -26,14 +26,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${firaSans.variable} ${firaCode.variable} font-sans antialiased`}>
-        <header className="border-b border-border bg-card">
+      <body className={`${firaSans.variable} ${firaCode.variable} relative font-sans antialiased`}>
+        {/* Decorative backdrop behind the header and page heading. */}
+        <div aria-hidden="true" className="bg-grid pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 opacity-40" />
+        <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-md">
           <div className="mx-auto flex h-14 max-w-6xl items-center px-4 sm:px-6">
             <Link
               href="/"
-              className="flex items-center gap-2 rounded-md font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+              className="group flex min-h-11 items-center gap-2 rounded-md font-semibold tracking-tight focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 text-success" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5 text-success transition-transform duration-(--dur-base) ease-(--ease-spring) group-hover:scale-110" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="5" cy="6" r="2.5" />
                 <circle cx="19" cy="18" r="2.5" />
                 <path d="M7.5 6H14a3 3 0 0 1 3 3v6.5" />

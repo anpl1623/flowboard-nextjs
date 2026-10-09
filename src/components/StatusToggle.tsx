@@ -42,21 +42,40 @@ function SwitchButton({
       aria-label={`${name} automation`}
       aria-busy={pending}
       disabled={pending}
-      className="group inline-flex min-h-11 cursor-pointer items-center gap-2.5 rounded-md px-2 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-wait"
+      className="inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-2.5 text-sm font-medium transition-[background-color,transform] duration-(--dur-fast) ease-(--ease-out) hover:bg-muted active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-wait"
     >
-      <span
-        aria-hidden="true"
-        className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
-          on ? "bg-success" : "bg-muted-foreground/40"
-        } ${pending ? "opacity-60" : ""}`}
-      >
+      {/* Layers, bottom to top: glow, paused track, active track (fades in), pending shimmer, thumb. */}
+      <span aria-hidden="true" className="relative h-5 w-9 shrink-0">
         <span
-          className={`size-4 rounded-full bg-card shadow-sm transition-transform duration-200 ${
+          className={`absolute -inset-1 rounded-full bg-success/30 blur-sm transition-opacity duration-(--dur-base) ${
+            on ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        <span className="absolute inset-0 rounded-full bg-muted-foreground/60" />
+        <span
+          className={`absolute inset-0 rounded-full bg-success transition-opacity duration-(--dur-base) ${
+            on ? "opacity-100" : "opacity-0"
+          }`}
+        />
+        {pending && (
+          <span className="absolute inset-0 overflow-hidden rounded-full motion-reduce:hidden">
+            <span className="absolute inset-0 animate-[shimmer_1s_linear_infinite] bg-linear-to-r from-transparent via-card/60 to-transparent" />
+          </span>
+        )}
+        {/* The spring easing overshoots its end point a little, which reads as the thumb "snapping" in. */}
+        <span
+          className={`absolute left-0 top-0.5 size-4 rounded-full bg-card shadow-card transition-transform duration-300 ease-(--ease-spring) ${
             on ? "translate-x-[18px]" : "translate-x-0.5"
           }`}
         />
       </span>
-      <span className={`w-14 text-left ${on ? "text-success" : "text-muted-foreground"}`}>
+      <span className={`flex w-[4.5rem] items-center gap-2 ${on ? "text-success" : "text-muted-foreground"}`}>
+        <span className="relative flex size-2 shrink-0">
+          {on && (
+            <span className="absolute inset-0 animate-[pulse-ring_2s_var(--ease-out)_infinite] rounded-full bg-success motion-reduce:hidden" />
+          )}
+          <span className={`relative size-2 rounded-full transition-colors duration-(--dur-base) ${on ? "bg-success" : "bg-muted-foreground"}`} />
+        </span>
         {on ? "Active" : "Paused"}
       </span>
     </button>
