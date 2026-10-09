@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { RunStatusBadge } from "@/components/RunStatusBadge";
 import { StatusToggle } from "@/components/StatusToggle";
 import { TriggerIcon } from "@/components/TriggerIcon";
@@ -140,7 +139,7 @@ function Stat({
         <span
           className={`font-mono text-3xl font-semibold leading-none tabular-nums ${tone === "danger" ? "text-danger" : ""}`}
         >
-          <AnimatedNumber value={value} />
+          {value}
         </span>
         {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
       </dd>

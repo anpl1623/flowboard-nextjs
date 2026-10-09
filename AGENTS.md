@@ -56,12 +56,12 @@ src/
 
 All motion tokens and keyframes live in `src/app/globals.css`. Use them; do not hardcode durations or easings.
 
-- Durations: `--dur-fast` 150ms (hover, press), `--dur-base` 220ms (state changes), `--dur-enter` 480ms (entrances), `--dur-exit` 150ms. Easings: `--ease-out` (enter), `--ease-in` (exit), `--ease-spring` (switch thumb).
+- Durations: `--dur-fast` 150ms (hover, press), `--dur-base` 220ms (state changes), `--dur-enter` 480ms (entrances). Easings: `--ease-out` (enter), `--ease-spring` (switch thumb).
 - Staggered entrances: add `motion-rise` (or `motion-fade` for table rows) and `style={stagger(i)}`. The delay is `i * --stagger`, capped at `--stagger-max` items.
 - Animate only `transform` and `opacity` (plus color and shadow on hover). Never width or height.
 - Entrance animations use `fill-mode: backwards` so hover transforms on the same element still work afterwards.
 - Reduced motion is handled once, globally, at the bottom of `globals.css`. Infinite animations (pulse, shimmer) also get `motion-reduce:hidden`.
-- Client components exist only where motion needs state: `StatusToggle`, `AnimatedNumber`, `PausedBanner`.
+- Keep motion in CSS. The only client component is `StatusToggle` (it needs `useFormStatus`). Do not add client components just for animation.
 
 ## Before calling a task done
 
