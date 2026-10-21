@@ -206,3 +206,18 @@ export function setWorkflowStatus(id: string, status: WorkflowStatus): Workflow 
   if (workflow) workflow.status = status;
   return workflow;
 }
+
+export function setWorkflowTrigger(id: string, detail: string): Workflow | undefined {
+  const workflow = getWorkflow(id);
+  if (workflow) {
+    workflow.trigger.detail = detail;
+    const triggerStep = workflow.steps.find((step) => step.kind === "trigger");
+    if (triggerStep && workflow.trigger.type === "schedule") {
+      triggerStep.label = detail;
+    }
+  }
+  return workflow;
+}
+
+export const updateWorkflowTrigger = setWorkflowTrigger;
+

@@ -3,13 +3,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { RunStatusBadge } from "@/components/RunStatusBadge";
 import { StatusToggle } from "@/components/StatusToggle";
-import { TriggerIcon } from "@/components/TriggerIcon";
+import { TriggerEditor } from "@/components/TriggerEditor";
 import { getWorkflow } from "@/lib/data";
 import { formatDateTime, formatDuration, successRate, timeAgo } from "@/lib/format";
 import { stagger } from "@/lib/motion";
 import type { StepKind } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -79,10 +80,7 @@ export default async function WorkflowPage({ params }: Props) {
 
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Fact index={2} label="Trigger">
-          <span className="flex items-center gap-1.5">
-            <TriggerIcon type={workflow.trigger.type} />
-            <span className="truncate">{workflow.trigger.detail}</span>
-          </span>
+          <TriggerEditor id={workflow.id} trigger={workflow.trigger} />
         </Fact>
         <Fact index={3} label="Owner">{workflow.owner}</Fact>
         <Fact index={4} label="Success rate">
